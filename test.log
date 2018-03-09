@@ -1,0 +1,47 @@
+VOC07 metric? Yes
+AP for aeroplane = 0.7448
+AP for bicycle = 0.7928
+AP for bird = 0.7315
+AP for boat = 0.6379
+AP for bottle = 0.5549
+AP for bus = 0.8054
+AP for car = 0.8337
+AP for cat = 0.8571
+AP for chair = 0.5579
+AP for cow = 0.7826
+AP for diningtable = 0.7274
+AP for dog = 0.8651
+AP for horse = 0.8362
+AP for motorbike = 0.8035
+AP for person = 0.8098
+AP for pottedplant = 0.4409
+AP for sheep = 0.7170
+AP for sofa = 0.7662
+AP for train = 0.7760
+AP for tvmonitor = 0.7143
+Mean AP = 0.7378
+~~~~~~~~
+Results:
+0.745
+0.793
+0.731
+0.638
+0.555
+0.805
+0.834
+0.857
+0.558
+0.783
+0.727
+0.865
+0.836
+0.804
+0.810
+0.441
+0.717
+0.766
+0.776
+0.714
+0.738
+~~~~~~~~
+
