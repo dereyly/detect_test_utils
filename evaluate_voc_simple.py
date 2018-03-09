@@ -17,8 +17,9 @@ import matplotlib.pyplot as plt
 import argparse
 import cv2
 
-
-img_dir='/home/dereyly/ImageDB/food/VOC5180/JPEGImages/'
+is_dbg=False
+if is_dbg:
+    img_dir='/home/dereyly/ImageDB/food/VOC5180/JPEGImages/'
 
 def VOCap(prec, rec): #copy this function from matlab
     mrec=np.hstack((0,rec,1))
@@ -112,8 +113,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
             if not key in data_gt:
                 key_sp = key.split('/')
                 key = key_sp[-2] + '/' + key_sp[-1]
-            if not key in data_gt:
-                key='WIDER_val/images/'+key
+
 
 
 
@@ -167,7 +167,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
             count+=1
             gt_all += bb_gt.shape[0] #(w_gt >= 30).sum()
-            if visualize:
+            if is_dbg:
                 img=cv2.imread(img_dir+key+'.jpg')
                 for bb in bb_gt:
                     bb=bb.astype(int)
