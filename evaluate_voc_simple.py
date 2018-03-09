@@ -90,17 +90,18 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
     # pkl.load(open(path_detect_meta,'rb'),encoding='latin1')
     data_res=read_meta(dir_detect_meta)
-    data_all=pkl.load(open(path_gt_meta,'rb'))
+    data_gt=pkl.load(open(path_gt_meta,'rb'))
     multi_cls = num_cls>2
     if multi_cls:
         APs=np.zeros(num_cls)
+        mAP = 0
 
-    mAP=0
+
     for j in range(1,num_cls):
         count=0
         n_props=0
         gt_all=0
-        overlaps_all = np.array([]).reshape(0)
+        props_positive = np.array([]).reshape(0)
         props_all = np.array([]).reshape(0)
         props_ignored = np.array([]).reshape(0)
 
@@ -108,18 +109,18 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
             # print(key)
             #bb_props=np.array(bb_props[1])
             bb_props = bb_props['bbox']
-            if not key in data_all:
+            if not key in data_gt:
                 key_sp = key.split('/')
                 key = key_sp[-2] + '/' + key_sp[-1]
-            if not key in data_all:
+            if not key in data_gt:
                 key='WIDER_val/images/'+key
 
 
 
             # print(list(data_all)[0])
-            bb_gt = data_all[key]['boxes'].astype(float) #['bbox']
+            bb_gt = data_gt[key]['boxes'].astype(float) #['bbox']
             if multi_cls:
-                cls=data_all[key]['gt_classes']
+                cls=data_gt[key]['gt_classes']
                 bb_gt=bb_gt[cls==j]
                 bb_props=bb_props[bb_props[:,5]==j]
             else:
@@ -160,13 +161,13 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
             pos_props_05_pos = calc_iou(bb_gt_pos,bb_props,thresh=0.5)
             pos_props_05_ignored = calc_iou(bb_gt_ignored, bb_props,thresh=0.5)
 
-            overlaps_all = np.hstack((overlaps_all, pos_props_05_pos)) if pos_props_05_pos.size else overlaps_all
+            props_positive = np.hstack((props_positive, pos_props_05_pos)) if pos_props_05_pos.size else props_positive
             props_all = np.hstack((props_all, bb_props[:, 4])) if bb_props.size else props_all
             props_ignored=np.hstack((props_ignored, pos_props_05_ignored)) if pos_props_05_ignored.size else props_ignored
 
             count+=1
             gt_all += bb_gt.shape[0] #(w_gt >= 30).sum()
-            if visualize and 0:
+            if visualize:
                 img=cv2.imread(img_dir+key+'.jpg')
                 for bb in bb_gt:
                     bb=bb.astype(int)
@@ -185,7 +186,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
         # del data_res
         # del data_all
-        print(gt_all,len(overlaps_all))
+        print(gt_all,len(props_positive))
         recall=[]
         num_boxes=[]
         prec=[]
@@ -193,7 +194,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
 
         for th in np.arange(0,1,step):
-            pos=(overlaps_all >th).sum().astype(float)
+            pos=(props_positive >th).sum().astype(float)
             res=(props_all > th).sum().astype(float)
             ignored=(props_ignored > th).sum().astype(float)
             recall.append(pos/gt_all)
