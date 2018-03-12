@@ -18,6 +18,7 @@ import argparse
 import cv2
 
 is_dbg=False
+use_ignore = False
 if is_dbg:
     img_dir='/home/dereyly/ImageDB/food/VOC5180/JPEGImages/'
 
@@ -114,9 +115,6 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
                 key_sp = key.split('/')
                 key = key_sp[-2] + '/' + key_sp[-1]
 
-
-
-
             # print(list(data_all)[0])
             bb_gt = data_gt[key]['boxes'].astype(float) #['bbox']
             if multi_cls:
@@ -135,11 +133,13 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
             bb_gt_pos=bb_gt
             bb_gt_ignored=np.array([])
             pos_props_05_pos = calc_iou(bb_gt_pos,bb_props,thresh=0.5)
-            pos_props_05_ignored = calc_iou(bb_gt_ignored, bb_props,thresh=0.5)
+            if use_ignore:
+                pos_props_05_ignored = calc_iou(bb_gt_ignored, bb_props,thresh=0.5)
 
             props_positive = np.hstack((props_positive, pos_props_05_pos)) if pos_props_05_pos.size else props_positive
             props_all = np.hstack((props_all, bb_props[:, 4])) if bb_props.size else props_all
-            props_ignored=np.hstack((props_ignored, pos_props_05_ignored)) if pos_props_05_ignored.size else props_ignored
+            if use_ignore:
+                props_ignored=np.hstack((props_ignored, pos_props_05_ignored)) if pos_props_05_ignored.size else props_ignored
 
             count+=1
             gt_all += bb_gt.shape[0] #(w_gt >= 30).sum()
@@ -173,9 +173,12 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
         for th in np.arange(0,1,step):
             pos=(props_positive >th).sum().astype(float)
             res=(props_all > th).sum().astype(float)
-            ignored=(props_ignored > th).sum().astype(float)
-            recall.append(pos/gt_all)
-            res_pos=res-ignored
+            recall.append(pos / gt_all)
+            if use_ignore:
+                ignored=(props_ignored > th).sum().astype(float)
+                res_pos=res-ignored
+            else:
+                res_pos=res
             if res_pos>0:
 
                 num_boxes.append(res_pos/count)
