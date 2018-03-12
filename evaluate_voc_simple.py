@@ -86,7 +86,7 @@ def read_meta(dir_meta, data_name=''):
                 data_out[key] = val
     return data_out
 
-def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2, NMS=0.3):
+def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2, NMS=0.4,precision_gt=0.9):
     #load proposals
 
     # pkl.load(open(path_detect_meta,'rb'),encoding='latin1')
@@ -129,33 +129,9 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
             if len(bb_gt)==0:
                 continue
-            # if not isinstance(bb_props,dict): #todo tmp debug
-            #     if len(bb_props)==2  and isinstance(bb_props[0],tuple):
-            #         bb_props_convert=[]
-            #         for bb in bb_props[1]:
-            #             bbc=list(bb[0])
-            #             bbc.append(bb[1])
-            #             bb_props_convert.append(bbc)
-            #         bb_props=np.array(bb_props_convert)
-            #         if len(bb_props)>0:
-            #             bb_props[:,[2,3]]=bb_props[:,[2,3]]+bb_props[:,[0,1]]
 
-            # if 'ignore_list' in data_all[key]:
-            #     ignore_list=data_all[key]['ignore_list'].astype(bool)
-            # else:
-            #     dim = len(data_all[key]['bbox'])
-            #     ignore_list = np.zeros(dim,np.uint8)
-            #     for n in range(dim):
-            #         ignore_list[n]=np.array(data_all[key][n]['attributes']==0).any()
-            # ignore_list=np.ones(bb_gt.shape,int)
             bb_props=np.array(bb_props)
-            # bb_props = bb_props[bb_props[:, 4] > 0.001]
-            #bb_props[:,[2,3]]=bb_props[:,[2,3]]-bb_props[:,[0,1]]
-            # w_gt = bb_gt[:, 2]
-            # bb_gt[:, [2, 3]] = bb_gt[:, [2, 3]] + bb_gt[:, [0, 1]]
 
-            # bb_gt_pos=bb_gt[ignore_list]
-            # bb_gt_ignored=bb_gt[np.logical_not(ignore_list)]
             bb_gt_pos=bb_gt
             bb_gt_ignored=np.array([])
             pos_props_05_pos = calc_iou(bb_gt_pos,bb_props,thresh=0.5)
@@ -190,6 +166,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
         recall=[]
         num_boxes=[]
         prec=[]
+        f1 = []
         k=0
 
 
@@ -203,11 +180,13 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
                 num_boxes.append(res_pos/count)
                 prec.append(pos/res_pos)
+
             else:
                 num_boxes.append(0)
                 prec.append(1)
+            f1.append(2 * prec[k] * recall[k] / (prec[k] + recall[k]))
             if not multi_cls:
-                print('th=%0.3f recall=%0.3f prec=%0.3f num_boxes=%d' % (th, recall[k], prec[k], num_boxes[k]))
+                print('th=%0.3f recall=%0.3f prec=%0.3f num_boxes=%d F1=%0.3f' % (th, recall[k], prec[k], num_boxes[k], f1[k]))
             k+=1
             zz=0
 
@@ -224,14 +203,13 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
     if multi_cls:
         mAP=APs[APs>0.1].mean()
         print(mAP)
-    # ths=np.arange(0,1,step)
-    # if not num_boxes_gt is None:
-    #     idx=np.argmin(np.abs(num_boxes-num_boxes_gt))
-    #     print('th=%0.3f recall=%0.3f num_boxes=%d' %(ths[idx],recall[idx],num_boxes[idx]))
-    #
-    # if not precision_gt is None:
-    #     idx=np.argmin(np.abs(prec-precision_gt))
-    #     print('th=%0.3f recall=%0.3f precision=%0.3f' % (ths[idx],recall[idx],prec[idx]))
+    ths=np.arange(0,1,step)
+    if not precision_gt is None:
+        idx=np.argmin(np.abs(prec-precision_gt))
+        print('th=%0.3f recall=%0.3f fix_precision=%0.3f' % (ths[idx],recall[idx],prec[idx]))
+
+    idx=np.argmax(f1)
+    print('F1=%0.3f (th=%0.3f recall=%0.3f precision=%0.3f)' % (f1[idx], ths[idx], recall[idx], prec[idx]))
     if visualize:
         plt.plot(recall, prec)
         plt.xlabel('recall')
@@ -265,5 +243,5 @@ if __name__ == '__main__':
     print('Called with argument:')
     print(args)
 
-
+    #coco AP at IoU=.50:.05:.95
     evaluate(dir_detect_meta=args.path_detect_meta, path_gt_meta=args.path_gt_meta,visualize=True,num_cls=args.num_cls)
