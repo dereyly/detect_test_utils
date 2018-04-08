@@ -103,7 +103,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
         count=0
         n_props=0
         gt_all=0
-        props_positive = np.array([]).reshape(0)
+        props_positive = [np.array([]).reshape(0) for i in range(10)]
         props_all = np.array([]).reshape(0)
         props_ignored = np.array([]).reshape(0)
 
@@ -132,11 +132,14 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
             bb_gt_pos=bb_gt
             bb_gt_ignored=np.array([])
-            pos_props_05_pos = calc_iou(bb_gt_pos,bb_props,thresh=0.5)
-            if use_ignore:
-                pos_props_05_ignored = calc_iou(bb_gt_ignored, bb_props,thresh=0.5)
+            #for iou_th in np.arange(0.5, 1.0, 0.05):
+            for i in range(10):
+                iou_th=0.5+0.05*i
+                pos_props_05_pos = calc_iou(bb_gt_pos,bb_props,thresh=iou_th)
+                if use_ignore:
+                    pos_props_05_ignored = calc_iou(bb_gt_ignored, bb_props,thresh=iou_th)
+                props_positive[i] = np.hstack((props_positive[i], pos_props_05_pos.copy())) if pos_props_05_pos.size else props_positive[i]
 
-            props_positive = np.hstack((props_positive, pos_props_05_pos)) if pos_props_05_pos.size else props_positive
             props_all = np.hstack((props_all, bb_props[:, 4])) if bb_props.size else props_all
             if use_ignore:
                 props_ignored=np.hstack((props_ignored, pos_props_05_ignored)) if pos_props_05_ignored.size else props_ignored
@@ -171,7 +174,7 @@ def evaluate(dir_detect_meta, path_gt_meta,visualize=False,step=0.001,num_cls=2,
 
 
         for th in np.arange(0,1,step):
-            pos=(props_positive >th).sum().astype(float)
+            pos=(props_positive[0] >th).sum().astype(float)
             res=(props_all > th).sum().astype(float)
             recall.append(pos / gt_all)
             if use_ignore:

@@ -15,8 +15,9 @@ import numpy as np
 # data_res=pkl.load(open('/home/dereyly/progs/Detectron/test/voc_dit_test/generalized_rcnn/detections.pkl','rb'))
 # voc = json.load(open('/home/dereyly/ImageDB/VOCPascal/PASCAL_VOC/pascal_val2007.json','r'))
 #data_dir='/home/dereyly/ImageDB/VOCPascal/VOCdevkit/VOC2007/'
+data_name='trainval'
 data_dir = '/home/dereyly/ImageDB/food/VOC5180/'
-content = data_dir+'/ImageSets/Main/test.txt'
+content = data_dir+'/ImageSets/Main/%s.txt' % data_name
 ann_dir=data_dir+'/Annotations/'
 img_dir=data_dir+'/JPEGImages/'
 
@@ -28,6 +29,6 @@ with open(content,'r') as f_in:
         #ext=content.split('.')[-1]
         path=ann_dir+line+'.xml'
         data[line]=vread._load_pascal_annotation(path)
-pkl.dump(data,open(data_dir+'test_gt.pkl','wb'))
+pkl.dump(data,open(data_dir+data_name+'_gt.pkl','wb'))
 
 
